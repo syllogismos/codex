@@ -219,8 +219,6 @@ describe("handleExecCommand", () => {
     spyCwd.mockRestore();
   });
 
-  // --- New Tests ---
-
   it("should run in sandbox if policy dictates (macOS)", async () => {
     const platformSpy = vi
       .spyOn(process, "platform", "get")
@@ -307,10 +305,6 @@ describe("handleExecCommand", () => {
       customDenyMessage: "",
     });
 
-    // Add intermediate assertion (optional, keep if helpful)
-    expect(mockedCanAutoApprove).toHaveBeenCalledTimes(0);
-    expect(mockGetCommandConfirmation).toHaveBeenCalledTimes(0);
-
     await handleExecCommand(
       mockExecInput,
       mockConfig,
@@ -370,18 +364,16 @@ describe("handleExecCommand", () => {
     expect(result.metadata?.["error"]).toBeUndefined(); // Access with ['error']
     expect(result.additionalItems).toBeDefined();
 
-    // --- Adjust type assertion and access path ---
     // The item itself has type, role, and content properties
     const firstItem = result.additionalItems?.[0] as ResponseInputItem & {
       type: "message";
-      role: string; // Role is at this level
-      content: Array<{ type: string; text: string }>; // Content is at this level
+      role: string;
+      content: Array<{ type: string; text: string }>;
     };
     // Access content directly from the firstItem
     expect(firstItem?.content[0]?.text).toContain(
       "No, don't do that — stop for now.",
     );
-    // --- End adjustment ---
   });
 
   it("should abort but add custom message if user rejects with NO_CONTINUE", async () => {
@@ -411,16 +403,14 @@ describe("handleExecCommand", () => {
     expect(result.outputText).toBe("aborted");
     expect(result.additionalItems).toBeDefined();
 
-    // --- Adjust type assertion and access path ---
     // The item itself has type, role, and content properties
     const firstItem = result.additionalItems?.[0] as ResponseInputItem & {
       type: "message";
-      role: string; // Role is at this level
-      content: Array<{ type: string; text: string }>; // Content is at this level
+      role: string;
+      content: Array<{ type: string; text: string }>;
     };
     // Access content directly from the firstItem
     expect(firstItem?.content[0]?.text).toBe(customMessage.trim());
-    // --- End adjustment ---
   });
 
   it('should skip approval prompts for "always approved" commands', async () => {
@@ -661,6 +651,4 @@ describe("handleExecCommand", () => {
       platformSpy.mockRestore();
     }
   });
-
-  // --- End New Tests ---
 });
