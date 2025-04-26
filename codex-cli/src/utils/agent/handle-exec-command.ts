@@ -218,14 +218,22 @@ async function execCommand(
   abortSignal?: AbortSignal,
   config?: AppConfig,
 ): Promise<ExecCommandSummary> {
-  let { workdir } = execInput;
-  if (workdir) {
+  // Use a separate variable to track the effective working directory
+  let effectiveWorkdir = execInput.workdir;
+  if (effectiveWorkdir) {
     try {
-      await access(workdir);
+      await access(effectiveWorkdir);
     } catch (e) {
-      log(`EXEC workdir=${workdir} not found, use process.cwd() instead`);
-      workdir = process.cwd();
+      log(
+        `EXEC workdir=${effectiveWorkdir} not found, use process.cwd() instead`,
+      );
+      // Update the effective working directory if access fails
+      effectiveWorkdir = process.cwd();
     }
+  } else {
+    // If no workdir was provided, default to cwd
+    effectiveWorkdir = process.cwd();
+    log(`EXEC workdir not provided, using process.cwd() = ${effectiveWorkdir}`);
   }
 
   if (applyPatchCommand != null) {
@@ -241,7 +249,7 @@ async function execCommand(
     log(
       `EXEC running \`${formatCommandForDisplay(
         cmd,
-      )}\` in workdir=${workdir} with timeout=${timeout}s`,
+      )}\` in workdir=${effectiveWorkdir} with timeout=${timeout}s`, // Log the effective workdir
     );
   }
 
@@ -251,9 +259,15 @@ async function execCommand(
   const start = Date.now();
   const execResult =
     applyPatchCommand != null
-      ? execApplyPatch(applyPatchCommand.patch, workdir)
+      ? execApplyPatch(applyPatchCommand.patch, effectiveWorkdir) // Use effective workdir
       : await exec(
-          { ...execInput, additionalWritableRoots },
+          {
+            // Construct the input using the effective workdir
+            cmd: execInput.cmd,
+            timeoutInMillis: execInput.timeoutInMillis,
+            workdir: effectiveWorkdir, // Ensure the updated workdir is passed
+            additionalWritableRoots,
+          },
           await getSandbox(runInSandbox),
           abortSignal,
           config,

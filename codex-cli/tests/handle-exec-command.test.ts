@@ -1,0 +1,195 @@
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
+import { handleExecCommand } from "../src/utils/agent/handle-exec-command"; // Adjust path as necessary
+import * as execModule from "../src/utils/agent/exec"; // Import the module to mock
+import * as approvalsModule from "../src/approvals"; // Import the module to mock canAutoApprove
+import * as fsPromises from "fs/promises";
+import type { AppConfig } from "../src/utils/config";
+import type { ApprovalPolicy, SafetyAssessment } from "../src/approvals";
+import type { ExecInput } from "../src/utils/agent/sandbox/interface";
+import { SandboxType } from "../src/utils/agent/sandbox/interface";
+import { ReviewDecision } from "../src/utils/agent/review";
+import type { CommandConfirmation } from "../src/utils/agent/agent-loop";
+
+// Mock dependencies
+vi.mock("../src/utils/agent/exec", async (importOriginal) => {
+  const actual = await importOriginal<typeof execModule>();
+  return {
+    ...actual,
+    exec: vi
+      .fn()
+      .mockResolvedValue({ stdout: "mock stdout", stderr: "", exitCode: 0 }),
+  };
+});
+
+vi.mock("../src/approvals", async (importOriginal) => {
+  const actual = await importOriginal<typeof approvalsModule>();
+  return {
+    ...actual,
+    canAutoApprove: vi.fn().mockReturnValue({
+      type: "auto-approve",
+      runInSandbox: false,
+      applyPatch: undefined,
+      reason: "Mocked auto-approval",
+      group: "mock_group",
+    } as SafetyAssessment),
+  };
+});
+
+vi.mock("fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof fsPromises>();
+  return {
+    ...actual,
+    access: vi.fn().mockResolvedValue(undefined), // Mock access to succeed
+  };
+});
+
+// Mock logger to prevent console output during tests
+vi.mock("../src/utils/logger/log", () => ({
+  log: vi.fn(),
+  isLoggingEnabled: vi.fn().mockReturnValue(false),
+}));
+
+describe("handleExecCommand", () => {
+  let mockConfig: AppConfig;
+  let mockPolicy: ApprovalPolicy;
+  let mockExecInput: ExecInput;
+  let mockGetCommandConfirmation: Mock<
+    (
+      command: Array<string>,
+      applyPatch: approvalsModule.ApplyPatchCommand | undefined,
+    ) => Promise<CommandConfirmation>
+  >;
+
+  const mockedExec = vi.mocked(execModule.exec);
+  const mockedCanAutoApprove = vi.mocked(approvalsModule.canAutoApprove);
+  const mockedFsAccess = vi.mocked(fsPromises.access);
+
+  beforeEach(() => {
+    vi.clearAllMocks(); // Clear mocks before each test
+
+    mockConfig = {
+      model: "test-model",
+      instructions: "test-instructions",
+      tools: {
+        shell: {
+          maxBytes: 1024,
+          maxLines: 100,
+        },
+      },
+    };
+
+    mockPolicy = "full-auto";
+
+    mockExecInput = {
+      cmd: ["echo", "hello"],
+      workdir: "/test/dir",
+      timeoutInMillis: 5000,
+    };
+
+    mockGetCommandConfirmation = vi.fn().mockResolvedValue({
+      review: ReviewDecision.YES,
+      customDenyMessage: "",
+    });
+
+    mockedCanAutoApprove.mockReturnValue({
+      type: "auto-approve",
+      runInSandbox: false,
+      applyPatch: undefined,
+      reason: "Mocked auto-approval",
+      group: "mock_group",
+    } as SafetyAssessment);
+    mockedExec.mockResolvedValue({
+      stdout: "mock stdout",
+      stderr: "",
+      exitCode: 0,
+    });
+    mockedFsAccess.mockResolvedValue(undefined);
+  });
+
+  it("should propagate AppConfig correctly to the exec function", async () => {
+    await handleExecCommand(
+      mockExecInput,
+      mockConfig,
+      mockPolicy,
+      ["/additional/writable"],
+      mockGetCommandConfirmation,
+      undefined,
+    );
+
+    expect(mockedFsAccess).toHaveBeenCalledWith(mockExecInput.workdir);
+
+    expect(mockedCanAutoApprove).toHaveBeenCalledWith(
+      mockExecInput.cmd,
+      mockExecInput.workdir,
+      mockPolicy,
+      [expect.any(String)],
+    );
+
+    expect(mockedExec).toHaveBeenCalledTimes(1);
+
+    const execCallArgs = mockedExec.mock.calls[0];
+    expect(execCallArgs).toBeDefined();
+
+    const passedExecInput = execCallArgs![0];
+    const passedSandboxType = execCallArgs![1];
+    const passedAbortSignal = execCallArgs![2];
+    const passedConfig = execCallArgs![3];
+
+    expect(passedConfig).toBeDefined();
+    expect(passedConfig).toMatchObject(mockConfig);
+    expect(passedConfig?.tools?.shell?.maxBytes).toBe(
+      mockConfig.tools?.shell?.maxBytes,
+    );
+    expect(passedConfig?.tools?.shell?.maxLines).toBe(
+      mockConfig.tools?.shell?.maxLines,
+    );
+
+    expect(passedExecInput).toEqual({
+      ...mockExecInput,
+      additionalWritableRoots: ["/additional/writable"],
+    });
+    expect(passedSandboxType).toBe(SandboxType.NONE);
+    expect(passedAbortSignal).toBeUndefined();
+  });
+
+  it("should use process.cwd() if workdir access fails", async () => {
+    const mockCwd = "/mock/cwd";
+    const spyCwd = vi.spyOn(process, "cwd").mockReturnValue(mockCwd);
+    mockedFsAccess.mockRejectedValue(new Error("Access denied"));
+
+    await handleExecCommand(
+      mockExecInput,
+      mockConfig,
+      mockPolicy,
+      [],
+      mockGetCommandConfirmation,
+      undefined,
+    );
+
+    expect(mockedFsAccess).toHaveBeenCalledWith(mockExecInput.workdir);
+    expect(mockedCanAutoApprove).toHaveBeenCalledWith(
+      mockExecInput.cmd,
+      mockExecInput.workdir,
+      mockPolicy,
+      [mockCwd],
+    );
+    expect(mockedExec).toHaveBeenCalledTimes(1);
+
+    const execCallArgs = mockedExec.mock.calls[0];
+    expect(execCallArgs).toBeDefined();
+    const passedExecInput = execCallArgs![0];
+
+    expect(passedExecInput.workdir).toBe(mockCwd);
+    expect(passedExecInput.cmd).toEqual(mockExecInput.cmd);
+
+    spyCwd.mockRestore();
+  });
+
+  // Add more tests for other scenarios:
+  // - Sandbox usage (runInSandbox = true)
+  // - User rejection (`askUserPermission` path)
+  // - Always approved commands path
+  // - Policy rejection path
+  // - Error handling during exec
+  // - `fullAutoErrorMode = ASK_USER` path
+});
