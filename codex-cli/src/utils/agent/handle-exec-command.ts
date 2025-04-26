@@ -94,6 +94,7 @@ export async function handleExecCommand(
       /* runInSandbox */ false,
       additionalWritableRoots,
       abortSignal,
+      config,
     ).then(convertSummaryToResult);
   }
 
@@ -142,6 +143,7 @@ export async function handleExecCommand(
     runInSandbox,
     additionalWritableRoots,
     abortSignal,
+    config,
   );
   // If the operation was aborted in the meantime, propagate the cancellation
   // upward by returning an empty (no-op) result so that the agent loop will
@@ -179,6 +181,7 @@ export async function handleExecCommand(
         false,
         additionalWritableRoots,
         abortSignal,
+        config,
       );
       return convertSummaryToResult(summary);
     }
@@ -213,6 +216,7 @@ async function execCommand(
   runInSandbox: boolean,
   additionalWritableRoots: ReadonlyArray<string>,
   abortSignal?: AbortSignal,
+  config?: AppConfig,
 ): Promise<ExecCommandSummary> {
   let { workdir } = execInput;
   if (workdir) {
@@ -252,6 +256,7 @@ async function execCommand(
           { ...execInput, additionalWritableRoots },
           await getSandbox(runInSandbox),
           abortSignal,
+          config,
         );
   const duration = Date.now() - start;
   const { stdout, stderr, exitCode } = execResult;

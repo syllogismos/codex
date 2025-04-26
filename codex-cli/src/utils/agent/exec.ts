@@ -1,3 +1,4 @@
+import type { AppConfig } from "../config.js";
 import type { ExecInput, ExecResult } from "./sandbox/interface.js";
 import type { SpawnOptions } from "child_process";
 import type { ParseEntry } from "shell-quote";
@@ -41,6 +42,7 @@ export function exec(
   }: ExecInput & { additionalWritableRoots: ReadonlyArray<string> },
   sandbox: SandboxType,
   abortSignal?: AbortSignal,
+  config?: AppConfig,
 ): Promise<ExecResult> {
   // This is a temporary measure to understand what are the common base commands
   // until we start persisting and uploading rollouts
@@ -59,7 +61,7 @@ export function exec(
     os.tmpdir(),
     ...additionalWritableRoots,
   ];
-  return execForSandbox(cmd, opts, writableRoots, abortSignal);
+  return execForSandbox(cmd, opts, writableRoots, abortSignal, config);
 }
 
 export function execApplyPatch(

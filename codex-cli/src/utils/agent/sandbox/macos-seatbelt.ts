@@ -1,4 +1,5 @@
 import type { ExecResult } from "./interface.js";
+import type { AppConfig } from "../../config.js";
 import type { SpawnOptions } from "child_process";
 
 import { exec } from "./raw-exec.js";
@@ -17,6 +18,7 @@ export function execWithSeatbelt(
   opts: SpawnOptions,
   writableRoots: ReadonlyArray<string>,
   abortSignal?: AbortSignal,
+  config?: AppConfig,
 ): Promise<ExecResult> {
   let scopedWritePolicy: string;
   let policyTemplateParams: Array<string>;
@@ -64,7 +66,7 @@ export function execWithSeatbelt(
     "--",
     ...cmd,
   ];
-  return exec(fullCommand, opts, writableRoots, abortSignal);
+  return exec(fullCommand, opts, writableRoots, abortSignal, config);
 }
 
 const READ_ONLY_SEATBELT_POLICY = `
