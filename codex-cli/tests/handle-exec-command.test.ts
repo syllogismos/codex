@@ -133,8 +133,8 @@ describe("handleExecCommand", () => {
       throw new Error("exec was not called");
     }
 
-    // The AppConfig should be the 4th parameter to exec
-    const passedConfig = execCallArgs[3] as AppConfig;
+    // The AppConfig should be the 3rd parameter to exec (index 2)
+    const passedConfig = execCallArgs[2] as AppConfig;
     expect(passedConfig).toBeDefined();
 
     // Check the config object equality

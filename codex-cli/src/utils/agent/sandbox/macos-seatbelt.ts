@@ -25,8 +25,8 @@ export function execWithSeatbelt(
   cmd: Array<string>,
   opts: SpawnOptions,
   writableRoots: ReadonlyArray<string>,
+  config: AppConfig,
   abortSignal?: AbortSignal,
-  config?: AppConfig,
 ): Promise<ExecResult> {
   let scopedWritePolicy: string;
   let policyTemplateParams: Array<string>;
@@ -74,7 +74,7 @@ export function execWithSeatbelt(
     "--",
     ...cmd,
   ];
-  return exec(fullCommand, opts, writableRoots, abortSignal, config);
+  return exec(fullCommand, opts, writableRoots, config, abortSignal);
 }
 
 const READ_ONLY_SEATBELT_POLICY = `

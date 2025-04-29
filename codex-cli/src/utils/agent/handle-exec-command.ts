@@ -256,8 +256,8 @@ async function execCommand(
       : await exec(
           { ...execInput, additionalWritableRoots },
           await getSandbox(runInSandbox),
-          abortSignal,
           config,
+          abortSignal,
         );
   const duration = Date.now() - start;
   const { stdout, stderr, exitCode } = execResult;

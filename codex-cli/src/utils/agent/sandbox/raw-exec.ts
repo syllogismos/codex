@@ -22,8 +22,8 @@ export function exec(
   command: Array<string>,
   options: SpawnOptions,
   _writableRoots: ReadonlyArray<string>,
+  config: AppConfig,
   abortSignal?: AbortSignal,
-  config?: AppConfig,
 ): Promise<ExecResult> {
   // Adapt command for the current platform (e.g., convert 'ls' to 'dir' on Windows)
   const adaptedCommand = adaptCommandForPlatform(command);

@@ -41,8 +41,8 @@ export function exec(
     additionalWritableRoots,
   }: ExecInput & { additionalWritableRoots: ReadonlyArray<string> },
   sandbox: SandboxType,
+  config: AppConfig,
   abortSignal?: AbortSignal,
-  config?: AppConfig,
 ): Promise<ExecResult> {
   // This is a temporary measure to understand what are the common base commands
   // until we start persisting and uploading rollouts
@@ -61,7 +61,7 @@ export function exec(
     os.tmpdir(),
     ...additionalWritableRoots,
   ];
-  return execForSandbox(cmd, opts, writableRoots, abortSignal, config);
+  return execForSandbox(cmd, opts, writableRoots, config, abortSignal);
 }
 
 export function execApplyPatch(
