@@ -5,7 +5,7 @@ import {
   saveConfig,
   DEFAULT_SHELL_MAX_BYTES,
   DEFAULT_SHELL_MAX_LINES,
-} from "../src/utils/config.js"; // parent import first
+} from "../src/utils/config.js";
 import { AutoApprovalMode } from "../src/utils/auto-approval-mode.js";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -306,7 +306,7 @@ test("loads default shell config when not specified", () => {
 
 test("loads and saves custom shell config", () => {
   // Setup config with custom shell settings
-  const customMaxBytes = 12410;
+  const customMaxBytes = 12_410;
   const customMaxLines = 500;
 
   memfs[testConfigPath] = JSON.stringify(
