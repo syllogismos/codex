@@ -219,20 +219,14 @@ async function execCommand(
   config: AppConfig,
   abortSignal?: AbortSignal,
 ): Promise<ExecCommandSummary> {
-  // Use a separate variable to track the effective working directory
   let { workdir } = execInput;
   if (workdir) {
     try {
       await fs.access(workdir);
     } catch (e) {
       log(`EXEC workdir=${workdir} not found, use process.cwd() instead`);
-      // Update the effective working directory if access fails
       workdir = process.cwd();
     }
-  } else {
-    // If no workdir was provided, default to cwd
-    workdir = process.cwd();
-    log(`EXEC workdir not provided, using process.cwd() = ${workdir}`);
   }
 
   if (applyPatchCommand != null) {
