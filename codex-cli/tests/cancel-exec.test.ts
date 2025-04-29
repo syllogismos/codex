@@ -40,9 +40,14 @@ describe("exec cancellation", () => {
   it("allows the process to finish when not aborted", async () => {
     const abortController = new AbortController();
 
+    const config: AppConfig = {
+      model: "test-model",
+      instructions: "test-instructions",
+    };
+
     const cmd = ["node", "-e", "console.log('finished')"];
 
-    const result = await rawExec(cmd, {}, [], abortController.signal);
+    const result = await rawExec(cmd, {}, [], config, abortController.signal);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe("finished");
