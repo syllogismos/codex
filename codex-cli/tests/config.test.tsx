@@ -334,8 +334,8 @@ test("loads and saves custom shell config", () => {
   expect(loadedConfig.tools?.shell?.maxLines).toBe(customMaxLines);
 
   // Modify shell settings and save
-  const updatedMaxBytes = 20000;
-  const updatedMaxLines = 1000;
+  const updatedMaxBytes = 20_000;
+  const updatedMaxLines = 1_000;
 
   const updatedConfig = {
     ...loadedConfig,
