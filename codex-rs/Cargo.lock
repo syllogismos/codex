@@ -475,7 +475,6 @@ dependencies = [
  "clap",
  "codex-core",
  "codex-exec",
- "codex-interactive",
  "codex-repl",
  "codex-tui",
  "serde_json",
@@ -527,8 +526,11 @@ name = "codex-exec"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "codex-core",
+ "owo-colors 4.2.0",
+ "shlex",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -552,16 +554,6 @@ dependencies = [
  "serde_with",
  "starlark",
  "tempfile",
-]
-
-[[package]]
-name = "codex-interactive"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "codex-core",
- "tokio",
 ]
 
 [[package]]
