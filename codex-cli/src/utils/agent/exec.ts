@@ -47,9 +47,6 @@ export function exec(
   // This is a temporary measure to understand what are the common base commands
   // until we start persisting and uploading rollouts
 
-  const execForSandbox =
-    sandbox === SandboxType.MACOS_SEATBELT ? execWithSeatbelt : rawExec;
-
   const opts: SpawnOptions = {
     timeout: timeoutInMillis || DEFAULT_TIMEOUT_MS,
     ...(requiresShell(cmd) ? { shell: true } : {}),
@@ -61,7 +58,13 @@ export function exec(
     os.tmpdir(),
     ...additionalWritableRoots,
   ];
-  return execForSandbox(cmd, opts, writableRoots, config, abortSignal);
+
+  if (sandbox === SandboxType.MACOS_SEATBELT) {
+    return execWithSeatbelt(cmd, opts, writableRoots, config, abortSignal);
+  }
+
+  // SandboxType.NONE (or any other) falls back to the raw exec implementation
+  return rawExec(cmd, opts, config, abortSignal);
 }
 
 export function execApplyPatch(

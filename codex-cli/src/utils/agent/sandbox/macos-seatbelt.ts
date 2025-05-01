@@ -74,7 +74,7 @@ export function execWithSeatbelt(
     "--",
     ...cmd,
   ];
-  return exec(fullCommand, opts, writableRoots, config, abortSignal);
+  return exec(fullCommand, opts, config, abortSignal);
 }
 
 const READ_ONLY_SEATBELT_POLICY = `

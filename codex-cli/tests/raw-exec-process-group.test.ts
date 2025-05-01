@@ -38,7 +38,7 @@ describe("rawExec – abort kills entire process group", () => {
     //  - prints the PID of the `sleep`
     //  - waits for `sleep` to exit
     const { stdout, exitCode } = await (async () => {
-      const p = rawExec(cmd, {}, [], config, abortController.signal);
+      const p = rawExec(cmd, {}, config, abortController.signal);
 
       // Give Bash a tiny bit of time to start and print the PID.
       await new Promise((r) => setTimeout(r, 100));

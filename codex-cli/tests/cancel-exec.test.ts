@@ -18,7 +18,8 @@ describe("exec cancellation", () => {
       instructions: "test-instructions",
     };
     const start = Date.now();
-    const promise = rawExec(cmd, {}, [], config, abortController.signal);
+
+    const promise = rawExec(cmd, {}, config, abortController.signal);
 
     // Abort almost immediately.
     abortController.abort();
@@ -47,7 +48,7 @@ describe("exec cancellation", () => {
 
     const cmd = ["node", "-e", "console.log('finished')"];
 
-    const result = await rawExec(cmd, {}, [], config, abortController.signal);
+    const result = await rawExec(cmd, {}, config, abortController.signal);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe("finished");

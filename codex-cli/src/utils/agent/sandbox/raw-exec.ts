@@ -21,7 +21,6 @@ import * as os from "os";
 export function exec(
   command: Array<string>,
   options: SpawnOptions,
-  _writableRoots: ReadonlyArray<string>,
   config: AppConfig,
   abortSignal?: AbortSignal,
 ): Promise<ExecResult> {
