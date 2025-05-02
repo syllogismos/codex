@@ -66,7 +66,13 @@ export function exec(
       return execWithSeatbelt(cmd, opts, writableRoots, config, abortSignal);
     }
     case SandboxType.LINUX_LANDLOCK: {
-      return execWithLandlock(cmd, opts, additionalWritableRoots, config, abortSignal);
+      return execWithLandlock(
+        cmd,
+        opts,
+        additionalWritableRoots,
+        config,
+        abortSignal,
+      );
     }
   }
 }
