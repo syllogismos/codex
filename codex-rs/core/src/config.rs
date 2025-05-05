@@ -30,6 +30,33 @@ pub struct Config {
 
     /// System instructions.
     pub instructions: Option<String>,
+
+    /// Optional external notifier command. When set, Codex will spawn this
+    /// program after each completed *turn* (i.e. when the agent finishes
+    /// processing a user submission). The value must be the full command
+    /// broken into argv tokens **without** the trailing JSON argument - Codex
+    /// appends one extra argument containing a JSON payload describing the
+    /// event.
+    ///
+    /// Example `~/.codex/config.toml` snippet:
+    ///
+    /// ```toml
+    /// notify = ["notify-send", "Codex"]
+    /// ```
+    ///
+    /// which will be invoked as:
+    ///
+    /// ```shell
+    /// notify-send Codex '{"type":"agent-turn-complete","turn-id":"12345"}'
+    /// ```
+    ///
+    /// If unset the feature is disabled.
+    pub notify: Option<Vec<String>>,
+
+    /// The directory that should be treated as the current working directory
+    /// for the session. All relative paths inside the business-logic layer are
+    /// resolved against this path.
+    pub cwd: PathBuf,
 }
 
 /// Base config deserialized from ~/.codex/config.toml.
@@ -51,6 +78,10 @@ pub struct ConfigToml {
     /// context with every request). Currently necessary for OpenAI customers
     /// who have opted into Zero Data Retention (ZDR).
     pub disable_response_storage: Option<bool>,
+
+    /// Optional external command to spawn for end-user notifications.
+    #[serde(default)]
+    pub notify: Option<Vec<String>>,
 
     /// System instructions.
     pub instructions: Option<String>,
@@ -109,6 +140,7 @@ where
 #[derive(Default, Debug, Clone)]
 pub struct ConfigOverrides {
     pub model: Option<String>,
+    pub cwd: Option<PathBuf>,
     pub approval_policy: Option<AskForApproval>,
     pub sandbox_policy: Option<SandboxPolicy>,
     pub disable_response_storage: Option<bool>,
@@ -132,6 +164,7 @@ impl Config {
         // Destructure ConfigOverrides fully to ensure all overrides are applied.
         let ConfigOverrides {
             model,
+            cwd,
             approval_policy,
             sandbox_policy,
             disable_response_storage,
@@ -154,6 +187,23 @@ impl Config {
 
         Self {
             model: model.or(cfg.model).unwrap_or_else(default_model),
+            cwd: cwd.map_or_else(
+                || {
+                    tracing::info!("cwd not set, using current dir");
+                    std::env::current_dir().expect("cannot determine current dir")
+                },
+                |p| {
+                    if p.is_absolute() {
+                        p
+                    } else {
+                        // Resolve relative paths against the current working directory.
+                        tracing::info!("cwd is relative, resolving against current dir");
+                        let mut cwd = std::env::current_dir().expect("cannot determine cwd");
+                        cwd.push(p);
+                        cwd
+                    }
+                },
+            ),
             approval_policy: approval_policy
                 .or(cfg.approval_policy)
                 .unwrap_or_else(AskForApproval::default),
@@ -161,6 +211,7 @@ impl Config {
             disable_response_storage: disable_response_storage
                 .or(cfg.disable_response_storage)
                 .unwrap_or(false),
+            notify: cfg.notify,
             instructions,
         }
     }
