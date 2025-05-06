@@ -20,7 +20,8 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           echo "Event name: ${{ github.event_name }}"
           echo "Comment body: ${{ github.event.comment.body }}"
-      - uses: contributor-assistant/github-action@v2.6.1
+      - name: CLA Assistant
+        uses: contributor-assistant/github-action@v2.6.1
         if: |
           github.repository == 'openai/codex' && (
             github.event_name == 'pull_request_target' ||
