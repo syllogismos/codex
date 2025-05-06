@@ -15,6 +15,11 @@ jobs:
   cla:
     runs-on: ubuntu-latest
     steps:
+      - name: Check if the repository is openai/codex
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Comment body: ${{ github.event.comment.body }}"
       - uses: contributor-assistant/github-action@v2.6.1
         if: |
           github.repository == 'openai/codex' && (
