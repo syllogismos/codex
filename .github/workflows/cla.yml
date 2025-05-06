@@ -14,15 +14,14 @@ permissions:
 jobs:
   cla:
     runs-on: ubuntu-latest
-    if: |
-      github.repository == 'openai/codex' &&
-      (github.event_name != 'pull_request_target' || github.event.pull_request.base.repo.full_name == 'openai/codex')
     steps:
       - uses: contributor-assistant/github-action@v2.6.1
         if: |
-          github.event_name == 'pull_request_target' ||
-          github.event.comment.body == 'recheck' ||
-          github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+          github.repository == 'openai/codex' && (
+            github.event_name == 'pull_request_target' ||
+            github.event.comment.body == 'recheck' ||
+            github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+          )
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
