@@ -14,7 +14,9 @@ permissions:
 jobs:
   cla:
     runs-on: ubuntu-latest
-    if: github.repository == 'openai/codex'
+    if: |
+      github.repository == 'openai/codex' &&
+      (github.event_name != 'pull_request_target' || github.event.pull_request.base.repo.full_name == 'openai/codex')
     steps:
       - uses: contributor-assistant/github-action@v2.6.1
         if: |
